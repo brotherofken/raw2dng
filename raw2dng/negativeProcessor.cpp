@@ -16,7 +16,7 @@
    Boston, MA 02110-1301, USA.
 
    This file uses code from dngconvert from Jens Mueller and others
-   (https://github.com/jmue/dngconvert) - Copyright (C) 2011 Jens 
+   (https://github.com/jmue/dngconvert) - Copyright (C) 2011 Jens
    Mueller (tschensinger at gmx dot de)
 */
 
@@ -37,7 +37,7 @@
 #include <zlib.h>
 
 #include <exiv2/image.hpp>
-#include <exiv2/xmp_exiv2.hpp>
+#include <exiv2/xmp.hpp>
 #include <libraw/libraw.h>
 
 const char* getDngErrorMessage(int errorCode) {
@@ -88,7 +88,7 @@ NegativeProcessor* NegativeProcessor::createProcessor(AutoPtr<dng_host> &host, c
     try {
         rawImage = Exiv2::ImageFactory::open(filename);
         rawImage->readMetadata();
-    } 
+    }
     catch (Exiv2::Error& e) {
         std::stringstream error; error << "Exiv2-error while opening/parsing rawFile (code " << e.code() << "): " << e.what();
         throw std::runtime_error(error.str());
@@ -122,7 +122,7 @@ NegativeProcessor::NegativeProcessor(AutoPtr<dng_host> &host, LibRaw *rawProcess
 
 
 NegativeProcessor::~NegativeProcessor() {
-	m_RawProcessor->recycle();
+    m_RawProcessor->recycle();
 }
 
 
@@ -153,8 +153,8 @@ void NegativeProcessor::setDNGPropertiesFromRaw() {
     if (found != std::string::npos) file = file.substr(found + 1, file.length() - found - 1);
     m_negative->SetOriginalRawFileName(file.c_str());
 
-	// -----------------------------------------------------------------------------------------
-	// Model
+    // -----------------------------------------------------------------------------------------
+    // Model
 
     dng_string makeModel;
     makeModel.Append(iparams->make);
@@ -163,7 +163,7 @@ void NegativeProcessor::setDNGPropertiesFromRaw() {
     m_negative->SetModelName(makeModel.Get());
 
     // -----------------------------------------------------------------------------------------
-    // Orientation 
+    // Orientation
 
     switch (sizes->flip) {
         case 180:
@@ -175,11 +175,11 @@ void NegativeProcessor::setDNGPropertiesFromRaw() {
         default: m_negative->SetBaseOrientation(dng_orientation::Normal()); break;
     }
 
-	// -----------------------------------------------------------------------------------------
-	// ColorKeys (this needs to happen before Mosaic - how about documenting that in the SDK???)
+    // -----------------------------------------------------------------------------------------
+    // ColorKeys (this needs to happen before Mosaic - how about documenting that in the SDK???)
 
     m_negative->SetColorChannels(iparams->colors);
-    m_negative->SetColorKeys(colorKey(iparams->cdesc[0]), colorKey(iparams->cdesc[1]), 
+    m_negative->SetColorKeys(colorKey(iparams->cdesc[0]), colorKey(iparams->cdesc[1]),
                              colorKey(iparams->cdesc[2]), colorKey(iparams->cdesc[3]));
 
     // -----------------------------------------------------------------------------------------
@@ -194,8 +194,8 @@ void NegativeProcessor::setDNGPropertiesFromRaw() {
             default: break;  // not throwing error, because this might be set in a sub-class (e.g., Fuji)
         }
 
-	// -----------------------------------------------------------------------------------------
-	// Default scale and crop/active area
+    // -----------------------------------------------------------------------------------------
+    // Default scale and crop/active area
 
     m_negative->SetDefaultScale(dng_urational(sizes->iwidth, sizes->width), dng_urational(sizes->iheight, sizes->height));
     m_negative->SetActiveArea(dng_rect(sizes->top_margin, sizes->left_margin,
@@ -230,15 +230,15 @@ void NegativeProcessor::setDNGPropertiesFromRaw() {
     libraw_colordata_t *colors  = &m_RawProcessor->imgdata.color;
 
     for (int i = 0; i < 4; i++)
-	    m_negative->SetWhiteLevel(static_cast<uint32>(colors->maximum), i);
+        m_negative->SetWhiteLevel(static_cast<uint32>(colors->maximum), i);
 
     if ((m_negative->GetMosaicInfo() != NULL) && (m_negative->GetMosaicInfo()->fCFAPatternSize == dng_point(2, 2)))
         m_negative->SetQuadBlacks(colors->black + colors->cblack[0],
                                   colors->black + colors->cblack[1],
                                   colors->black + colors->cblack[2],
                                   colors->black + colors->cblack[3]);
-    else 
-    	m_negative->SetBlackLevel(colors->black + colors->cblack[0], 0);
+    else
+        m_negative->SetBlackLevel(colors->black + colors->cblack[0], 0);
 
     // -----------------------------------------------------------------------------------------
     // Fixed properties
@@ -277,19 +277,19 @@ void NegativeProcessor::setCameraProfile(const char *dcpFilename) {
 
         int colors = m_RawProcessor->imgdata.idata.colors;
         if ((colors == 3) || (colors = 4)) {
-	        dng_matrix *colormatrix1 = new dng_matrix(colors, 3);
+            dng_matrix *colormatrix1 = new dng_matrix(colors, 3);
 
-        	for (int i = 0; i < colors; i++)
-        		for (int j = 0; j < 3; j++)
-        			(*colormatrix1)[i][j] = m_RawProcessor->imgdata.color.cam_xyz[i][j];
+            for (int i = 0; i < colors; i++)
+                for (int j = 0; j < 3; j++)
+                    (*colormatrix1)[i][j] = m_RawProcessor->imgdata.color.cam_xyz[i][j];
 
             if (colormatrix1->MaxEntry() == 0.0) {
                 printf("Warning, camera XYZ Matrix is null\n");
                 delete colormatrix1;
                 if (colors == 3)
-                	colormatrix1 = new dng_matrix_3by3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+                    colormatrix1 = new dng_matrix_3by3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
                 else
-                	colormatrix1 = new dng_matrix_4by3(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+                    colormatrix1 = new dng_matrix_4by3(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
             }
             prof->SetColorMatrix1(*colormatrix1);
         }
@@ -448,14 +448,14 @@ void NegativeProcessor::setExifFromRaw(const dng_date_time_info &dateTimeNow, co
     getRawExifTag("Exif.Iop.InteroperabilityIndex", &negExif->fInteroperabilityIndex);
     getRawExifTag("Exif.Iop.InteroperabilityVersion", 0, &negExif->fInteroperabilityVersion); // this is not in the Exif standard but in DNG SDK and Exiv2
 
-/*  Fields in the DNG SDK Exif structure that we are ignoring here. Some could potentially be 
+/*  Fields in the DNG SDK Exif structure that we are ignoring here. Some could potentially be
     read through Exiv2 but are not part of the Exif standard so we leave them out:
      - fBatteryLevelA, fBatteryLevelR
      - fSelfTimerMode
      - fTIFF_EP_StandardID, fImageNumber
      - fApproxFocusDistance
      - fFlashCompensation, fFlashMask
-     - fFirmware 
+     - fFirmware
      - fLensID
      - fLensNameWasReadFromExif (--> available but not used by SDK)
      - fRelatedImageFileFormat, fRelatedImageWidth, fRelatedImageLength */
@@ -493,7 +493,7 @@ void NegativeProcessor::setExifFromRaw(const dng_date_time_info &dateTimeNow, co
 
     negExif->fDateTime = dateTimeNow;
     negExif->fSoftware = appNameVersion;
-    negExif->fExifVersion = DNG_CHAR4 ('0','2','3','0'); 
+    negExif->fExifVersion = DNG_CHAR4 ('0','2','3','0');
 }
 
 
@@ -507,7 +507,7 @@ void NegativeProcessor::setXmpFromRaw(const dng_date_time_info &dateTimeNow, con
             negXmp->Set(Exiv2::XmpProperties::nsInfo(it->groupName())->ns_, it->tagName().c_str(), it->toString().c_str());
         }
         catch (dng_exception& e) {
-            // the above will throw an exception when trying to add XMPs with unregistered (i.e., unknown) 
+            // the above will throw an exception when trying to add XMPs with unregistered (i.e., unknown)
             // namespaces -- we just drop them here.
             std::cerr << "Dropped XMP-entry from raw-file since namespace is unknown: "
                          "NS: "   << Exiv2::XmpProperties::nsInfo(it->groupName())->ns_ << ", "
@@ -634,7 +634,7 @@ void NegativeProcessor::embedOriginalRaw(const char *rawFilename) {
     dng_memory_stream embeddedRawStream(m_host->Allocator());
     embeddedRawStream.SetBigEndian(true);
     embeddedRawStream.Put_uint32(rawFileSize);
-    for (uint32 block = 0; block < numberRawBlocks; block++) 
+    for (uint32 block = 0; block < numberRawBlocks; block++)
         embeddedRawStream.Put_uint32(0);  // indices for the block-offsets
     embeddedRawStream.Put_uint32(0);  // index to next data fork
 
@@ -650,11 +650,11 @@ void NegativeProcessor::embedOriginalRaw(const char *rawFilename) {
         zstrm.zalloc = Z_NULL;
         zstrm.zfree = Z_NULL;
         zstrm.opaque = Z_NULL;
-        if (deflateInit(&zstrm, Z_DEFAULT_COMPRESSION) != Z_OK) 
+        if (deflateInit(&zstrm, Z_DEFAULT_COMPRESSION) != Z_OK)
             throw std::runtime_error("Error initialising ZLib for embedding raw file!");
 
         unsigned char inBuffer[BLOCKSIZE], outBuffer[BLOCKSIZE * 2];
-        uint32 currentRawBlockLength = 
+        uint32 currentRawBlockLength =
             static_cast<uint32>(std::min(static_cast<uint64>(BLOCKSIZE), rawFileSize - rawDataStream.Position()));
         rawDataStream.Get(inBuffer, currentRawBlockLength);
         zstrm.avail_in = currentRawBlockLength;
